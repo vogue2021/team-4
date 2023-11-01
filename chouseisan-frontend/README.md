@@ -1,5 +1,9 @@
 # Chouseisan like scheduler
 
+```bash
+cd chouseisan-frontend
+```
+
 ## Usage
 
 install dependency first:
