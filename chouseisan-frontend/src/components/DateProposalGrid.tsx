@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState, forwardRef } from "react";
 import { EventNote, NoiseAware } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -48,7 +48,7 @@ export default function () {
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
   const [comment, setComment] = useState("");
-  const [schedule, setSchedule] = useState("");
+  const [schedule, setSchedule] = useState([0]);
   const [textFieldValue, setTextFieldValue] = useState("");
   const navigate = useNavigate();
   const handleSelection = (
@@ -70,13 +70,20 @@ export default function () {
     trigger,
     formState: { errors },
   } = formMethods;
+  const targetRef = useRef<HTMLDivElement | null>(
+    document.querySelector(".add-header")
+  );
+
   React.useEffect(() => {
+    targetRef.current = document.querySelector(".add-header");
+    console.log(targetRef.current);
     axios
       .get(`/eventObject`)
       .then((response) => {
-        console.log(response.data);
+        // console.log(response.data);
         setRows(generateRows(response.data));
         setColumns(generateColumns(response.data));
+        setSchedule(Array(response.data.scheduleList.length).fill(0));
       })
       .catch((reason) => {
         console.log(reason);
@@ -99,7 +106,7 @@ export default function () {
         console.log("ERROR connecting backend service");
       });
   };
-  console.log("errors=", errors);
+  // console.log("errors=", errors);
   const generateRows = (eventObject: event) => {
     let rows: rowData[] = [];
     eventObject.scheduleList.map((schedule, index) => {
@@ -196,6 +203,12 @@ export default function () {
               onClick={() => {
                 setShowAddForm((showAddForm) => true);
                 setTextFieldValue(() => obj.name);
+                setSchedule(() => obj.result);
+                setComment(() => obj.comment);
+                console.log(targetRef);
+                if (targetRef.current) {
+                  targetRef.current.scrollIntoView({ behavior: "smooth" });
+                }
               }}
               component="button"
             >
@@ -281,7 +294,9 @@ export default function () {
         )}
         {showAddForm && (
           <>
-            <div className="add-header">Add attendance</div>
+            <div className="add-header" ref={targetRef}>
+              Add attendance
+            </div>
             <p className="event-detail">Name</p>
             <TextField
               size="small"
@@ -307,6 +322,7 @@ export default function () {
               >
                 <span style={{ marginLeft: "20px" }}>{obj.Schedule}</span>
                 <Controller
+                  defaultValue={schedule[index]}
                   control={control}
                   {...register(`result.${index}`, {
                     validate: (value) => {
