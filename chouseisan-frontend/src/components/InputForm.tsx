@@ -48,21 +48,21 @@ import { DemoContainer, DemoItem } from "@mui/x-date-pickers/internals/demo";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers";
+import * as timezone from "dayjs/plugin/timezone";
 import axios from "axios";
-type CustomLocation = {
-  state: { from: { pathname: string } };
-};
+// type CustomLocation = {
+//   state: { from: { pathname: string } };
+// };
 
 export default function InputForm() {
   const [dateList, setDateList] = React.useState("");
   const [title, setTitle] = useState("");
   const [detail, setDetail] = useState("");
   const navigate = useNavigate();
-  const location: CustomLocation = useLocation() as CustomLocation;
-  // let fromPathName = "/create-complete";
-  // if (location.state) {
-  //   fromPathName = location.state.from.pathname;
-  // }
+  const utc = require("dayjs/plugin/utc");
+  const timezone = require("dayjs/plugin/timezone");
+
+  const japanTime = dayjs();
   const eventSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     axios
@@ -186,11 +186,12 @@ export default function InputForm() {
               </p>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DateCalendar
-                  defaultValue={dayjs("2023-11-1 18:00:00")}
+                  defaultValue={dayjs(japanTime)}
                   sx={{ overflow: "visible" }}
                   disablePast
                   onChange={(date) => {
-                    const origin = date!.toString();
+                    //set to asia/tokyo timezone
+                    const origin = date!.add(9, "hour").toString();
                     let res = `${origin.slice(8, 11)} ${origin.slice(
                       5,
                       7

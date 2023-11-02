@@ -96,5 +96,16 @@
     "title": "f",
     "detail": "fds",
     "dateList": "sdf"
+  },
+  "addAttendence": {
+    "name": "asd",
+    "result": [
+      2,
+      2,
+      1,
+      3,
+      3
+    ],
+    "comment": "dsf"
   }
 }

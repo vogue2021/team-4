@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { EventNote, NoiseAware } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import {
   Button,
   Link,
@@ -27,7 +28,8 @@ import unknownIcon from "../images/unknown.png";
 import "./DateProposalGrid.css";
 import axios from "axios";
 
-import { event } from "../types/Event";
+import { event, proposal } from "../types/Event";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 interface MyObject {
   [key: string]: JSX.Element;
@@ -48,18 +50,26 @@ export default function () {
   const [comment, setComment] = useState("");
   const [schedule, setSchedule] = useState("");
   const [textFieldValue, setTextFieldValue] = useState("");
+  const navigate = useNavigate();
   const handleSelection = (
     event: React.MouseEvent<HTMLElement>,
     newSelection: number | null
   ) => {
     setSelected(newSelection);
   };
-  const event = {
-    eventName: "meeting",
-    eventDetail: "123",
-    respondents: 2,
-  };
-
+  const formMethods = useForm<proposal>({
+    mode: "onChange",
+    defaultValues: {},
+  });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    control,
+    getValues,
+    trigger,
+    formState: { errors },
+  } = formMethods;
   React.useEffect(() => {
     axios
       .get(`/eventObject`)
@@ -73,6 +83,23 @@ export default function () {
         console.log("ERROR connecting backend service");
       });
   }, []);
+  const onSubmit: SubmitHandler<proposal> = (data) => {
+    axios
+      .post(`/addAttendence`, {
+        name: data.name,
+        result: data.result,
+        comment: data.comment,
+      })
+      .then(function (response) {
+        console.log(response);
+        // navigate("/view_event");
+        window.location.reload();
+      })
+      .catch(function (response) {
+        console.log("ERROR connecting backend service");
+      });
+  };
+  console.log("errors=", errors);
   const generateRows = (eventObject: event) => {
     let rows: rowData[] = [];
     eventObject.scheduleList.map((schedule, index) => {
@@ -259,43 +286,72 @@ export default function () {
             <TextField
               size="small"
               fullWidth
-              onChange={(e) => setName(e.target.value)}
               defaultValue={textFieldValue}
+              {...register("name", { required: "this field is required" })}
+              error={"name" in errors}
+              helperText={errors.name?.message}
             />
             <p className="event-detail">Schedule</p>
-            {rows.map((obj) => (
-              <div className="schedule-row">
+            {errors?.result && (
+              <span className="error-message">
+                Please select all the schedule!
+              </span>
+            )}
+            {rows.map((obj, index) => (
+              <div
+                className={
+                  errors?.result?.[index]
+                    ? "schedule-row-error "
+                    : "schedule-row"
+                }
+              >
                 <span style={{ marginLeft: "20px" }}>{obj.Schedule}</span>
-                <ToggleButtonGroup
-                  value={selected}
-                  exclusive
-                  onChange={handleSelection}
-                  aria-label="circular buttons"
-                  sx={{ position: "absolute", right: 0 }}
-                >
-                  <ToggleButton value={1} className="toggle-button">
-                    <CheckIcon />
-                  </ToggleButton>
-                  <ToggleButton value={2} className="toggle-button">
-                    <QuestionMarkIcon />
-                  </ToggleButton>
-                  <ToggleButton
-                    value={3}
-                    className="toggle-button"
-                    sx={{
-                      marginRight: "20px",
-                    }}
-                  >
-                    <ClearIcon />
-                  </ToggleButton>
-                </ToggleButtonGroup>
+                <Controller
+                  control={control}
+                  {...register(`result.${index}`, {
+                    validate: (value) => {
+                      if (!value) return "please select";
+                      else return true;
+                    },
+                  })}
+                  render={({ field: { onChange, value } }) => (
+                    <ToggleButtonGroup
+                      value={value}
+                      exclusive
+                      onChange={(e, newValue) => {
+                        // 更新字段的值
+                        onChange(newValue);
+                      }}
+                      aria-label="circular buttons"
+                      sx={{ position: "absolute", right: 0 }}
+                    >
+                      <ToggleButton value={1} className="toggle-button">
+                        <CheckIcon />
+                      </ToggleButton>
+                      <ToggleButton value={2} className="toggle-button">
+                        <QuestionMarkIcon />
+                      </ToggleButton>
+                      <ToggleButton
+                        value={3}
+                        className="toggle-button"
+                        sx={{
+                          marginRight: "20px",
+                        }}
+                      >
+                        <ClearIcon />
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  )}
+                />
               </div>
             ))}
             <p className="event-detail">Comment</p>
             <TextField
               size="small"
               fullWidth
-              onChange={(e) => setComment(e.target.value)}
+              {...register("comment", { required: "this field is required" })}
+              error={"comment" in errors}
+              helperText={errors.comment?.message}
             />
             <Button
               variant="contained"
@@ -309,6 +365,7 @@ export default function () {
                 fontWeight: "600",
                 textTransform: "none",
               }}
+              onClick={handleSubmit(onSubmit)}
             >
               Submit
             </Button>
