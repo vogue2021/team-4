@@ -197,7 +197,8 @@ export default function InputForm() {
                       7
                     )}(${origin.slice(0, 3)}) ${origin.slice(17, 22)}～`;
                     setDateList((dateList) => {
-                      dateList += `${res}\n`;
+                      if (dateList) dateList += `\n`;
+                      dateList += `${res}`;
                       return dateList;
                     });
                   }}

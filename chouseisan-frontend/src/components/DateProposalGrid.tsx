@@ -339,7 +339,7 @@ export default function () {
                 Please select all the schedule!
               </span>
             )}
-            {rows.map((obj, index) => (
+            {rows.slice(0, -1).map((obj, index) => (
               <div
                 className={
                   errors?.result?.[index]
@@ -358,13 +358,6 @@ export default function () {
                       else return true;
                     },
                   })}
-                  rules={{
-                    validate: (value) => {
-                      console.log(value);
-                      if (!value) return "please select";
-                      else return true;
-                    },
-                  }}
                   render={({
                     field: { onChange, value = schedule[index] },
                   }) => (
