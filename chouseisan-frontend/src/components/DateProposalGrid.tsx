@@ -28,7 +28,7 @@ import unknownIcon from "../images/unknown.png";
 import "./DateProposalGrid.css";
 import axios from "axios";
 
-import { event, proposal } from "../types/Event";
+import { event, proposal, addAttendence } from "../types/Event";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 interface MyObject {
@@ -37,9 +37,9 @@ interface MyObject {
 interface rowData {
   id: number;
   Schedule: string;
-  yes: number;
-  unknown: number;
-  no: number;
+  yes: number | string;
+  unknown: number | string;
+  no: number | string;
 }
 export default function () {
   const [rows, setRows] = useState<rowData[]>([]);
@@ -57,9 +57,9 @@ export default function () {
   ) => {
     setSelected(newSelection);
   };
-  const formMethods = useForm<proposal>({
+  let formMethods = useForm<addAttendence>({
     mode: "onChange",
-    defaultValues: {},
+    defaultValues: { result: [] },
   });
   const {
     register,
@@ -68,6 +68,7 @@ export default function () {
     control,
     getValues,
     trigger,
+    reset,
     formState: { errors },
   } = formMethods;
   const targetRef = useRef<HTMLDivElement | null>(
@@ -75,22 +76,20 @@ export default function () {
   );
 
   React.useEffect(() => {
-    targetRef.current = document.querySelector(".add-header");
-    console.log(targetRef.current);
     axios
       .get(`/eventObject`)
       .then((response) => {
         // console.log(response.data);
         setRows(generateRows(response.data));
         setColumns(generateColumns(response.data));
-        setSchedule(Array(response.data.scheduleList.length).fill(0));
+        setSchedule(Array(response.data.scheduleList.length).fill(undefined));
       })
       .catch((reason) => {
         console.log(reason);
         console.log("ERROR connecting backend service");
       });
   }, []);
-  const onSubmit: SubmitHandler<proposal> = (data) => {
+  const onSubmit: SubmitHandler<addAttendence> = (data) => {
     axios
       .post(`/addAttendence`, {
         name: data.name,
@@ -128,6 +127,13 @@ export default function () {
         unknown: unknownNum,
         no: noNum,
       });
+    });
+    rows.push({
+      id: eventObject.scheduleList.length + 1,
+      Schedule: "Comment",
+      yes: "",
+      unknown: "",
+      no: "",
     });
     return rows;
   };
@@ -189,6 +195,7 @@ export default function () {
         else if (num === 2) objectPosition = "52%";
         else if (num === 3) objectPosition = "102%";
       });
+
       columns.push({
         field: obj.name,
         width: 100,
@@ -201,14 +208,21 @@ export default function () {
             <Link
               color={"#A52A2A"}
               onClick={() => {
+                reset({
+                  name: obj.name,
+                  result: obj.result,
+                  comment: obj.comment,
+                });
                 setShowAddForm((showAddForm) => true);
                 setTextFieldValue(() => obj.name);
                 setSchedule(() => obj.result);
                 setComment(() => obj.comment);
-                console.log(targetRef);
-                if (targetRef.current) {
-                  targetRef.current.scrollIntoView({ behavior: "smooth" });
-                }
+
+                setTimeout(() => {
+                  if (targetRef.current) {
+                    targetRef.current.scrollIntoView({ behavior: "smooth" });
+                  }
+                }, 100);
               }}
               component="button"
             >
@@ -216,20 +230,25 @@ export default function () {
             </Link>
           </div>
         ),
-        renderCell: (params: GridRenderCellParams) => (
-          <img
-            src={noIcon}
-            style={{
-              height: 25,
-              width: 27,
-              objectPosition: getObejctPosition(
-                obj.result[(params.id as number) - 1]
-              ),
-              objectFit: "cover",
-              margin: "0 auto",
-            }}
-          />
-        ),
+        renderCell: (params: GridRenderCellParams) => {
+          if (params.id === obj.result.length + 1)
+            return <span style={{ margin: "0 auto" }}>{obj.comment}</span>;
+          else
+            return (
+              <img
+                src={noIcon}
+                style={{
+                  height: 25,
+                  width: 27,
+                  objectPosition: getObejctPosition(
+                    obj.result[(params.id as number) - 1]
+                  ),
+                  objectFit: "cover",
+                  margin: "0 auto",
+                }}
+              />
+            );
+        },
       });
     });
     return columns;
@@ -274,6 +293,7 @@ export default function () {
       >
         {!showAddForm && (
           <Button
+            className="btn-add"
             variant="contained"
             sx={{
               width: 170,
@@ -286,7 +306,7 @@ export default function () {
               textTransform: "none",
             }}
             onClick={() => {
-              setShowAddForm((showAddForm) => !showAddForm);
+              setShowAddForm((showAddForm) => true);
             }}
           >
             Add Attendence
@@ -301,10 +321,17 @@ export default function () {
             <TextField
               size="small"
               fullWidth
-              defaultValue={textFieldValue}
               {...register("name", { required: "this field is required" })}
               error={"name" in errors}
               helperText={errors.name?.message}
+            />
+            <p className="event-detail">Email</p>
+            <TextField
+              size="small"
+              fullWidth
+              {...register("email", { required: "this field is required" })}
+              error={"email" in errors}
+              helperText={errors.email?.message}
             />
             <p className="event-detail">Schedule</p>
             {errors?.result && (
@@ -322,20 +349,32 @@ export default function () {
               >
                 <span style={{ marginLeft: "20px" }}>{obj.Schedule}</span>
                 <Controller
-                  defaultValue={schedule[index]}
+                  // defaultValue={schedu/e[index]}
                   control={control}
                   {...register(`result.${index}`, {
                     validate: (value) => {
+                      console.log(value);
                       if (!value) return "please select";
                       else return true;
                     },
                   })}
-                  render={({ field: { onChange, value } }) => (
+                  rules={{
+                    validate: (value) => {
+                      console.log(value);
+                      if (!value) return "please select";
+                      else return true;
+                    },
+                  }}
+                  render={({
+                    field: { onChange, value = schedule[index] },
+                  }) => (
                     <ToggleButtonGroup
                       value={value}
                       exclusive
                       onChange={(e, newValue) => {
-                        // 更新字段的值
+                        const updatedSchedule = [...schedule];
+                        updatedSchedule[index] = newValue;
+                        setSchedule(updatedSchedule);
                         onChange(newValue);
                       }}
                       aria-label="circular buttons"
