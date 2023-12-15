@@ -49,7 +49,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers";
 import * as timezone from "dayjs/plugin/timezone";
-import axios from "axios";
+import axios from "../utils/axios";
 // type CustomLocation = {
 //   state: { from: { pathname: string } };
 // };
@@ -66,18 +66,19 @@ export default function InputForm() {
   const eventSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     axios
-      .post(`/submit`, {
+      .post(`/create`, {
         title: title,
         detail: detail,
         dateList: dateList,
       })
       .then(function (response) {
-        navigate("/create_complete");
+        navigate(`/create_complete?h=${response.data.uuid}`);
       })
       .catch(function (response) {
         console.log("ERROR connecting backend service");
       });
   };
+  // console.log(dayjs.unix(1699255903).format("YYYY-MM-DD HH:mm:ss"));
   return (
     <>
       <Box sx={{ backgroundColor: "#6dd643", height: 350, marginBottom: 0 }}>

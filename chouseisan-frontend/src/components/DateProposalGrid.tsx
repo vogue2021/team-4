@@ -1,4 +1,4 @@
-import React, { useRef, useState, forwardRef } from "react";
+import React, { useRef, useState, forwardRef, useEffect } from "react";
 import { EventNote, NoiseAware } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -26,7 +26,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import unknownIcon from "../images/unknown.png";
 // import axios from "../utils/axios";
 import "./DateProposalGrid.css";
-import axios from "axios";
+import axios from "../utils/axios";
 
 import { event, proposal, addAttendence } from "../types/Event";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
@@ -77,7 +77,7 @@ export default function () {
 
   React.useEffect(() => {
     axios
-      .get(`/eventObject`)
+      .get(`/eventData`)
       .then((response) => {
         // console.log(response.data);
         setRows(generateRows(response.data));
@@ -89,6 +89,7 @@ export default function () {
         console.log("ERROR connecting backend service");
       });
   }, []);
+
   const onSubmit: SubmitHandler<addAttendence> = (data) => {
     axios
       .post(`/addAttendence`, {

@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 import "./CreateComplete.css";
 export default function CreateComplete() {
-  console.log("123");
+  const [url, setUrl] = useState("http://localhost:3000/scheduler/create_complete?h=d4fd82c927564792a4cf2a855464f944");
   return (
     <>
       <div className="container">
@@ -37,7 +37,11 @@ export default function CreateComplete() {
         <TextField
           size="small"
           fullWidth
-          defaultValue={"https://chouseisan.com"}
+          // defaultValue={"https://chouseisan.com"}
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+          }}
         />
         <Button
           size="large"
