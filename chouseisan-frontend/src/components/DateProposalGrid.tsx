@@ -50,6 +50,7 @@ export default function () {
   const [comment, setComment] = useState("");
   const [schedule, setSchedule] = useState([0]);
   const [textFieldValue, setTextFieldValue] = useState("");
+  const [input, setInput] = useState("");
   const navigate = useNavigate();
   const handleSelection = (
     event: React.MouseEvent<HTMLElement>,
@@ -139,6 +140,7 @@ export default function () {
     return rows;
   };
   const generateColumns = (eventObject: event) => {
+    console.log("generateColumns RENDERED");
     let columns: GridColDef[] = [
       {
         field: "Schedule",
@@ -233,7 +235,19 @@ export default function () {
         ),
         renderCell: (params: GridRenderCellParams) => {
           if (params.id === obj.result.length + 1)
-            return <span style={{ margin: "0 auto" }}>{obj.comment}</span>;
+            return (
+              // <TextField
+              //   onChange={(e) => {
+              //     setInput(e.target.value);
+              //   }}
+              // ></TextField>
+              <textarea
+                onChange={(e) => {
+                  setInput(e.target.value);
+                }}
+              ></textarea>
+            );
+          // return <span style={{ margin: "0 auto" }}>{obj.comment}</span>;
           else
             return (
               <img
